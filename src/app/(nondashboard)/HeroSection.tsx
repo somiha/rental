@@ -1,5 +1,5 @@
 import dynamic from "next/dynamic";
-const MapView = dynamic(() => import("../../../components/Mapview"), {
+const MapView = dynamic(() => import("../../components/Mapview"), {
   ssr: false,
   loading: () => <div className="h-[600px] w-full bg-gray-200 animate-pulse" />,
 });

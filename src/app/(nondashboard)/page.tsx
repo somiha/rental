@@ -2,7 +2,7 @@
 
 import HeroSection from "./HeroSection";
 import Search from "./Search";
-import DiscoverSection from "./DiscoverSection";
+import DiscoverSection from "./landing/DiscoverSection";
 
 const Page = () => {
   return (
