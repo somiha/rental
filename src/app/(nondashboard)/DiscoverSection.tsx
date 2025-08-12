@@ -26,7 +26,9 @@ const DiscoverSection = () => {
   }, []);
 
   return (
-    <section className="relative w-full bg-primary-700">
+    <section className="relative w-full bg-green-gradient overflow-hidden">
+      {/* Background Image */}
+
       <AnimatePresence>
         {animate && (
           <motion.div
@@ -34,17 +36,20 @@ const DiscoverSection = () => {
             animate="visible"
             exit="hidden"
             variants={containerVariants}
-            className="py-12 mb-16"
+            className="py-12 mb-16 relative z-10"
           >
             <div className="max-w-6xl xl:max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 xl:px-16">
-              <motion.div variants={itemVariants} className="my-12 text-center">
-                <h2 className="text-3xl font-semibold leading-tight text-white">
+              <motion.div
+                variants={itemVariants}
+                className="my-12 text-center text-white"
+              >
+                <h2 className="text-3xl font-semibold leading-tight">
                   Discover
                 </h2>
                 <p className="mt-4 text-lg text-primary-200">
                   Find your Dream Rental Property Today!
                 </p>
-                <p className="mt-2 text-primary-50 max-w-3xl mx-auto">
+                <p className="mt-2 max-w-3xl mx-auto text-primary-50">
                   Searching for your dream rental property has never been
                   easier. With our user-friendly search feature, you can quickly
                   find the perfect home that meets all your needs. Start your

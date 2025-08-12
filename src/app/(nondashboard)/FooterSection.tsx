@@ -23,7 +23,7 @@ const FooterSection = () => {
                 className="text-2xl font-extrabold tracking-widest text-primary hover:text-primary-600 transition-colors"
                 scroll={false}
               >
-                RENTIFUL
+                RENT
               </Link>
             </div>
 
