@@ -8,6 +8,7 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { Property } from "@/types/property";
 
 // Default configuration constants
 const DEFAULT_CENTER: [number, number] = [25.77, -80.18];
@@ -42,23 +43,23 @@ const DefaultIcon = L.icon({
 // Set default icon for all markers globally
 L.Marker.prototype.options.icon = DefaultIcon;
 
-interface Apartment {
-  id: number;
-  position: [number, number];
-  name: string;
-  price: string;
-  image: string;
-}
+// interface Apartment {
+//   id: number;
+//   position: [number, number];
+//   name: string;
+//   price: string;
+//   image: string;
+// }
 
 interface MapViewProps {
-  data: Apartment[]; // More generic name than "apartments"
+  data: Property[]; // More generic name than "apartments"
   center?: [number, number];
   zoom?: number;
   tileLayerUrl?: string;
   markerIcon?: L.Icon;
   className?: string;
   style?: React.CSSProperties;
-  renderPopup?: (item: Apartment) => React.ReactNode;
+  renderPopup?: (item: Property) => React.ReactNode;
   clusterOptions?: {
     showCoverageOnHover?: boolean;
     zoomToBoundsOnClick?: boolean;
@@ -91,12 +92,12 @@ const MapView = ({
 
   if (!isMounted) return null;
 
-  const defaultRenderPopup = (apartment: Apartment) => (
+  const defaultRenderPopup = (property: Property) => (
     <div className="w-[200px]">
       <div className="relative h-[120px] rounded-md overflow-hidden mb-2">
         <Image
-          src={apartment.image}
-          alt={apartment.name}
+          src={property.image}
+          alt={property.name}
           width={200}
           height={120}
           className="object-cover"
@@ -104,8 +105,8 @@ const MapView = ({
           priority={false}
         />
       </div>
-      <h3 className="font-bold text-sm">{apartment.name}</h3>
-      <p className="text-teal-600 mt-1 text-xs">{apartment.price}</p>
+      <h3 className="font-bold text-sm">{property.name}</h3>
+      <p className="text-teal-600 mt-1 text-xs">{property.price}</p>
     </div>
   );
 

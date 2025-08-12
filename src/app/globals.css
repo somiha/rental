@@ -252,6 +252,33 @@
   }
 }
 
+@layer utilities {
+  .text-primary {
+    color: var(--primary);
+  }
+  .text-secondary {
+    color: var(--secondary);
+  }
+  .bg-primary {
+    background-color: var(--primary);
+  }
+  .text-primary-foreground {
+    color: var(--primary-foreground);
+  }
+  .hover\:bg-primary:hover {
+    background-color: var(--color-primary-600);
+  }
+  .text-muted-foreground {
+    color: var(--muted-foreground);
+  }
+  .bg-card {
+    background-color: var(--card);
+  }
+  .text-card-foreground {
+    color: var(--card-foreground);
+  }
+}
+
 @layer components {
   .custom-marker-cluster {
     background: rgba(16, 185, 129, 0.2);

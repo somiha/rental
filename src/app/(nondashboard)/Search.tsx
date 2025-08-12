@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import ButtonPrimary from "@/components/ui/ButtonPrimary";
+import ButtonPrimary from "@/components/ButtonPrimary";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -34,7 +34,7 @@ const HeroSection = () => {
   const [searchExpanded, setSearchExpanded] = useState(false);
 
   return (
-    <section className="relative w-full">
+    <section className="relative w-full bg-secondary-100">
       <div className="left-1/2 bottom-8 -translate-x-1/2 w-2/3 max-w-4xl rounded-lg border border-secondary-300 bg-secondary-50 shadow-lg dark:border-gray-700 dark:bg-gray-800 overflow-visible relative">
         <div className="p-4">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 mb-4">
