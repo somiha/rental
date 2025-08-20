@@ -5,12 +5,18 @@ import Image from "next/image";
 import { Button } from "./ui/button";
 
 const Navbar = () => {
+  const links = [
+    { label: "Home", href: "/" },
+    { label: "Properties", href: "/properties" },
+    { label: "Agents", href: "/agents" },
+    { label: "Contact", href: "/contact" },
+  ];
   return (
     <div
       className="fixed top-0 left-0 w-full shadow-xl z-100"
       style={{ height: `${NAVBAR_HEIGHT}px` }}
     >
-      <div className="flex justify-between items-center w-full py-3 px-8 bg-primary-500 text-white">
+      <div className="flex justify-between items-center w-full py-3 px-8 bg-primary-700 text-white">
         <div className="flex items-center gap-4 md:gap-6">
           <Link
             href="/"
@@ -25,19 +31,30 @@ const Navbar = () => {
                 height={24}
                 className="w-6 h-6"
               />
-              <div className="text-2xl font-bold">RENT</div>
+              <div className="text-2xl font-bold text-secondary-200 hover:text-accent-200">
+                RENT
+              </div>
               <span className="text-secondary-500 font-light hover:!text-primary-300"></span>
             </div>
           </Link>
         </div>
-        <p className="text-primary-200 hidden md:block">
-          Discover your perfect rental apartment with our advanced search
-        </p>
+        <ul className="hidden md:flex space-x-6 text-primary-200">
+          {links.map(({ label, href }) => (
+            <li key={label}>
+              <Link
+                href={href}
+                className="cursor-pointer text-secondary-200 hover:text-accent-300 transition-colors duration-200"
+              >
+                {label}
+              </Link>
+            </li>
+          ))}
+        </ul>
         <div className="flex items-center gap-5">
           <Link href="/signin">
             <Button
               variant="outline"
-              className="text-white border-white bg-transparent hover:bg-white hover:text-primary-700 rounded-lg"
+              className="text-white border-accent-300 bg-transparent hover:bg-accent-200 hover:text-primary-800 rounded-lg"
             >
               Sign In
             </Button>
@@ -46,7 +63,7 @@ const Navbar = () => {
           <Link href="/signup">
             <Button
               variant="secondary"
-              className="text-white border-white bg-secondary-600 hover:bg-white hover:text-primary-700 rounded-lg"
+              className="text-accent-800 border-white bg-secondary-300 hover:bg-accent-200 hover:text-primary-800 rounded-lg"
             >
               Sign Up
             </Button>

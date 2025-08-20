@@ -1,33 +1,24 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  useMapEvent,
+} from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
-import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Property } from "@/types/property";
 
-// Default configuration constants
-const DEFAULT_CENTER: [number, number] = [25.77, -80.18];
-const DEFAULT_ZOOM = 13;
+const DEFAULT_CENTER: [number, number] = [23.8041, 90.4152];
+const DEFAULT_ZOOM = 16;
 const DEFAULT_TILE_LAYER_URL =
   "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
-
-interface CustomMarkerCluster {
-  getChildCount: () => number;
-  getAllChildMarkers: () => L.Marker[];
-}
-
-const createClusterCustomIcon = (cluster: CustomMarkerCluster) => {
-  return L.divIcon({
-    html: `<span class="cluster-inner">${cluster.getChildCount()}</span>`,
-    className: "custom-marker-cluster",
-    iconSize: L.point(40, 40, true),
-  });
-};
 
 const DefaultIcon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png",
@@ -40,19 +31,11 @@ const DefaultIcon = L.icon({
   shadowSize: [41, 41],
 });
 
-// Set default icon for all markers globally
+// set default icon globally
 L.Marker.prototype.options.icon = DefaultIcon;
 
-// interface Apartment {
-//   id: number;
-//   position: [number, number];
-//   name: string;
-//   price: string;
-//   image: string;
-// }
-
 interface MapViewProps {
-  data: Property[]; // More generic name than "apartments"
+  data: Property[];
   center?: [number, number];
   zoom?: number;
   tileLayerUrl?: string;
@@ -60,12 +43,18 @@ interface MapViewProps {
   className?: string;
   style?: React.CSSProperties;
   renderPopup?: (item: Property) => React.ReactNode;
-  clusterOptions?: {
-    showCoverageOnHover?: boolean;
-    zoomToBoundsOnClick?: boolean;
-    spiderfyOnMaxZoom?: boolean;
-    iconCreateFunction?: (cluster: CustomMarkerCluster) => L.DivIcon;
-  };
+  onClick?: (lat: number, lng: number) => void;
+}
+
+function MapClickHandler({
+  onClick,
+}: {
+  onClick?: (lat: number, lng: number) => void;
+}) {
+  useMapEvent("click", (e) => {
+    if (onClick) onClick(e.latlng.lat, e.latlng.lng);
+  });
+  return null;
 }
 
 const MapView = ({
@@ -77,21 +66,8 @@ const MapView = ({
   className = "",
   style = { height: "600px", width: "100%" },
   renderPopup,
-  clusterOptions = {
-    showCoverageOnHover: false,
-    zoomToBoundsOnClick: true,
-    spiderfyOnMaxZoom: true,
-    iconCreateFunction: createClusterCustomIcon,
-  },
+  onClick,
 }: MapViewProps) => {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) return null;
-
   const defaultRenderPopup = (property: Property) => (
     <div className="w-[200px]">
       <div className="relative h-[120px] rounded-md overflow-hidden mb-2">
@@ -101,8 +77,6 @@ const MapView = ({
           width={200}
           height={120}
           className="object-cover"
-          quality={80}
-          priority={false}
         />
       </div>
       <h3 className="font-bold text-sm">{property.name}</h3>
@@ -122,7 +96,7 @@ const MapView = ({
         url={tileLayerUrl}
       />
 
-      <MarkerClusterGroup {...clusterOptions}>
+      <MarkerClusterGroup>
         {data.map((item) => (
           <Marker key={item.id} position={item.position} icon={markerIcon}>
             <Popup>
@@ -131,6 +105,8 @@ const MapView = ({
           </Marker>
         ))}
       </MarkerClusterGroup>
+
+      <MapClickHandler onClick={onClick} />
     </MapContainer>
   );
 };
