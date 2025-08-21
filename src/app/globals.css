@@ -71,6 +71,7 @@
 } */
 
 @import url("https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap");
 
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -82,20 +83,34 @@
   --color-foreground: var(--foreground);
 
   /* Primary (Teal) */
-  --color-primary-50: #ecf8f4;
+  /* --color-primary-50: #ecf8f4;
   --color-primary-100: #d8f1e9;
   --color-primary-200: #b1e3d3;
   --color-primary-300: #8bd5bd;
   --color-primary-400: #64c7a7;
   --color-primary-500: #048853;
+  --color-primary-500: #00a66b;
   --color-primary-600: #037349;
   --color-primary-700: #025e3d;
   --color-primary-800: #014933;
   --color-primary-900: #013326;
-  --color-primary-950: #001a13;
+  --color-primary-950: #001a13; */
+
+  /* Primary Green Palette (Airbnb Style) */
+  --color-primary-50: #f0faf6;
+  --color-primary-100: #d9f3eb;
+  --color-primary-200: #b8e9db;
+  --color-primary-300: #97dfcc;
+  --color-primary-400: #66d1b7;
+  --color-primary-500: #00a66b; /* Core Airbnb Green */
+  --color-primary-600: #008f5c;
+  --color-primary-700: #00784e;
+  --color-primary-800: #006240;
+  --color-primary-900: #004d33;
+  --color-primary-950: #002f1f;
 
   /* Secondary (Beige) */
-  --color-secondary-50: #fcfbf9;
+  /* --color-secondary-50: #fcfbf9;
   --color-secondary-100: #f8f5f0;
   --color-secondary-200: #f1ebe1;
   --color-secondary-300: #e8dfcf;
@@ -105,10 +120,23 @@
   --color-secondary-700: #8f7d61;
   --color-secondary-800: #6b5e49;
   --color-secondary-900: #473f31;
-  --color-secondary-950: #242018;
+  --color-secondary-950: #242018; */
+
+  /* Secondary (Warm Beige – Refined for Airbnb Style) */
+  --color-secondary-50: #fcfcf9; /* Creamy off-white */
+  --color-secondary-100: #f9f7f1; /* Soft page background */
+  --color-secondary-200: #f3f0e6; /* Card surface */
+  --color-secondary-300: #eae5d7; /* Subtle divider */
+  --color-secondary-400: #dddac9; /* Warm border */
+  --color-secondary-500: #cbb490; /* Base beige (keep your original) */
+  --color-secondary-600: #b39d7a; /* Slightly warm brown */
+  --color-secondary-700: #8f7d61; /* Rich text, headings */
+  --color-secondary-800: #6b5e49; /* Strong text on light */
+  --color-secondary-900: #473f31; /* Deep warm brown */
+  --color-secondary-950: #2d2a24; /* Near-black with warmth */
 
   /* Accent (Sky Blue) */
-  --color-accent-50: #f0f8fb;
+  /* --color-accent-50: #f0f8fb;
   --color-accent-100: #d8eef6;
   --color-accent-200: #b1ddee;
   --color-accent-300: #89cbe5;
@@ -118,10 +146,22 @@
   --color-accent-700: #24718f;
   --color-accent-800: #1a556d;
   --color-accent-900: #103a4b;
-  --color-accent-950: #071f28;
+  --color-accent-950: #071f28; */
+
+  --color-accent-50: #f3fbfd; /* Airy, softest tint */
+  --color-accent-100: #e0f6fb; /* Light sky wash */
+  --color-accent-200: #c3edf5; /* Gentle highlight */
+  --color-accent-300: #a0e2ee; /* Hover state */
+  --color-accent-400: #75d5e6; /* Active state */
+  --color-accent-500: #4cc6db; /* Primary accent (warm teal-blue) */
+  --color-accent-600: #3aacc1; /* Pressed state */
+  --color-accent-700: #2c8fa5; /* Strong text/icon */
+  --color-accent-800: #207289; /* Dark text */
+  --color-accent-900: #16566b; /* Deep blue-gray */
+  --color-accent-950: #0e3d4e; /* Almost black */
 
   /* Neutral Grays */
-  --color-gray-50: #f8fafc;
+  /* --color-gray-50: #f8fafc;
   --color-gray-100: #f1f5f9;
   --color-gray-200: #e2e8f0;
   --color-gray-300: #cbd5e1;
@@ -131,13 +171,30 @@
   --color-gray-700: #334155;
   --color-gray-800: #1e293b;
   --color-gray-900: #0f172a;
-  --color-gray-950: #020617;
+  --color-gray-950: #020617; */
+
+  --color-gray-50: #fcfcfc;
+  --color-gray-100: #f8f9fa;
+  --color-gray-200: #f1f3f5;
+  --color-gray-300: #e3e6e8;
+  --color-gray-400: #cbd0d3;
+  --color-gray-500: #9da4aa;
+  --color-gray-600: #6b727c;
+  --color-gray-700: #4b5563;
+  --color-gray-800: #2d323a;
+  --color-gray-900: #1a1d1f;
+  --color-gray-950: #0f1112;
 
   /* Fonts */
   /* --font-sans: "Nunito Sans", sans-serif;
   --font-mono: "IBM Plex Mono", monospace; */
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  /* --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif; */
+  /* --font-sans: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif; */
+
+  --font-sans: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
   /* Layout Radius */
   --radius-sm: calc(var(--radius) - 4px);
@@ -148,6 +205,13 @@
 
 :root {
   --radius: 0.625rem;
+
+  /* --foreground: var(--color-gray-900);
+  --muted-foreground: var(--color-gray-500);
+  --border: var(--color-gray-300);
+  --input: var(--color-gray-300);
+  --card: var(--color-gray-50);
+  --background: var(--color-gray-50); */
 
   /* Light Mode (mapped from palette) */
   --background: var(--color-secondary-50);
@@ -185,6 +249,10 @@
   --sidebar-accent-foreground: var(--color-accent-50);
   --sidebar-border: var(--color-gray-200);
   --sidebar-ring: var(--color-primary-300);
+
+  --font-sans: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
 }
 
 .dark {
@@ -240,7 +308,10 @@
   body {
     height: 100%;
     margin: 0;
-    font-family: var(--font-sans);
+    font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI",
+      Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.43;
     background-color: var(--color-background);
     color: var(--color-foreground);
     transition: background-color 0.2s ease, color 0.2s ease;
@@ -261,6 +332,9 @@
   }
   .text-accent {
     color: var(--accent);
+  }
+  .text-foreground {
+    color: var(--foreground);
   }
   .bg-primary {
     background-color: var(--primary);
@@ -298,11 +372,14 @@
   .bg-green-gradient {
     background-image: linear-gradient(
       135deg,
-      var(--color-primary-900) 0%,
-      var(--color-primary-700) 20%,
-      var(--color-accent-600) 50%,
-      var(--color-secondary-300) 100%
+      var(--color-primary-50) 0%,
+      /* Very light mint */ var(--color-primary-100) 40%,
+      /* Soft tint */ var(--color-secondary-50) 70%,
+      /* Warm beige base */ var(--color-accent-50) 100% /* Sky-tinged light */
     );
+    /* Optional: subtle smoothness */
+    background-size: 150% 150%;
+    transition: background-position 0.5s ease;
   }
 
   .custom-marker-cluster {
@@ -334,5 +411,8 @@
 
   .leaflet-container {
     z-index: 0;
+    cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%23e53e3e' viewBox='0 0 24 24' width='24' height='24'><path d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z'/></svg>")
+        12 24,
+      pointer !important;
   }
 }

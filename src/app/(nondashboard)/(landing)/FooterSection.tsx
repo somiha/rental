@@ -11,110 +11,88 @@ import {
 
 const FooterSection = () => {
   return (
-    <section className="bg-secondary-300 w-full relative">
-      {" "}
-      <footer className="border-t border-gray-700 py-16 text-gray-300">
-        <div className="max-w-6xl mx-auto px-6 sm:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-8 md:gap-0">
+    <footer className="border-t border-gray-300 py-8 text-gray-700 w-2/3">
+      {/* Airbnb-Exact Side Spacing */}
+      <div className="px-[2px] sm:px-[24px] lg:px-[4px] max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 md:gap-12">
+          {/* Left Side: Brand + Nav */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 md:gap-4 w-full md:w-auto">
             {/* Brand */}
-            <div className="mb-6 md:mb-0">
+            <div>
               <Link
                 href="/"
-                className="text-2xl font-extrabold tracking-widest text-primary hover:text-primary-600 transition-colors"
+                className="text-2xl font-bold tracking-tight text-primary-700 hover:text-primary-800 transition-colors"
                 scroll={false}
               >
-                RENT
+                rentiful
               </Link>
             </div>
 
-            {/* Navigation */}
+            {/* Navigation Links - Compact, inline, left-aligned */}
             <nav>
-              <ul className="flex flex-wrap text-primary-600 justify-center gap-6 text-sm font-medium uppercase tracking-wide">
+              <ul className="flex flex-wrap gap-x-2 gap-y-2 text-sm text-gray-600 font-normal">
                 <li>
                   <Link
                     href="/about"
-                    className="hover:text-primary transition-colors"
+                    className="hover:text-primary-700 transition-colors duration-200"
                   >
-                    About Us
+                    about
                   </Link>
                 </li>
                 <li>
                   <Link
                     href="/contact"
-                    className="hover:text-primary transition-colors"
+                    className="hover:text-primary-700 transition-colors duration-200"
                   >
-                    Contact Us
+                    contact us
                   </Link>
                 </li>
                 <li>
                   <Link
                     href="/faq"
-                    className="hover:text-primary transition-colors"
+                    className="hover:text-primary-700 transition-colors duration-200"
                   >
-                    FAQ
+                    help center
                   </Link>
                 </li>
                 <li>
                   <Link
                     href="/terms"
-                    className="hover:text-primary transition-colors"
+                    className="hover:text-primary-700 transition-colors duration-200"
                   >
-                    Terms
+                    terms
                   </Link>
                 </li>
                 <li>
                   <Link
                     href="/privacy"
-                    className="hover:text-primary transition-colors"
+                    className="hover:text-primary-700 transition-colors duration-200"
                   >
-                    Privacy
+                    privacy
                   </Link>
                 </li>
               </ul>
             </nav>
-
-            {/* Social Icons */}
-            <div className="flex space-x-6 text-xl">
-              {[faFacebook, faInstagram, faTwitter, faLinkedin, faYoutube].map(
-                (icon, idx) => (
-                  <a
-                    key={idx}
-                    href="#"
-                    aria-label="Social Link"
-                    className="text-primary-500 hover:text-primary transition-colors hover:scale-110"
-                  >
-                    <FontAwesomeIcon icon={icon} />
-                  </a>
-                )
-              )}
-            </div>
           </div>
 
-          {/* Bottom small print */}
-          <div className="mt-12 flex flex-wrap justify-center gap-6 text-xs text-primary-500 border-t border-gray-700 pt-6">
-            <span>© RENTIFUL. All rights reserved.</span>
-            <Link
-              href="/privacy"
-              className="hover:text-primary transition-colors"
-            >
-              Privacy Policy
-            </Link>
-            <Link
-              href="/terms"
-              className="hover:text-primary transition-colors"
-            >
-              Terms of Service
-            </Link>
-            <Link
-              href="/cookies"
-              className="hover:text-primary transition-colors"
-            >
-              Cookie Policy
-            </Link>
+          {/* Social Icons - Right Side */}
+          <div className="flex space-x-5 text-lg">
+            {[faFacebook, faInstagram, faTwitter, faLinkedin, faYoutube].map(
+              (icon, idx) => (
+                <a
+                  key={idx}
+                  href="#"
+                  aria-label="Social Link"
+                  className="text-gray-500 hover:text-primary-700 transition-colors duration-200 hover:scale-105"
+                >
+                  <FontAwesomeIcon icon={icon} />
+                </a>
+              )
+            )}
           </div>
         </div>
-      </footer>
-    </section>
+      </div>
+    </footer>
   );
 };
 

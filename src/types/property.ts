@@ -29,3 +29,33 @@ export interface Agent {
 export interface PropertyTypeFilterProps {
   types: string[];
 }
+
+export type PropertyType =
+  | "House"
+  | "Flat"
+  | "Building"
+  | "Restaurant"
+  | "Commercial";
+export type SizeUnit = "sqft" | "sqm" | "katha" | "bigha";
+
+export interface PropertyFormData {
+  title: string;
+  type: PropertyType;
+  division?: string;
+  district?: string;
+  upazilla?: string;
+  houseNo: string;
+  roadNo: string;
+  address?: string;
+  latitude: number;
+  longitude: number;
+  size: number;
+  sizeUnit: SizeUnit;
+  description: string;
+  parking: boolean;
+  gasService: boolean;
+  balcony: boolean;
+  dining: boolean;
+  drawing: boolean;
+  images: File[];
+}

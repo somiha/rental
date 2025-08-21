@@ -31,6 +31,15 @@ const DefaultIcon = L.icon({
   shadowSize: [41, 41],
 });
 
+const PinIcon = L.icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.3/dist/images/marker-shadow.png",
+  className: "",
+  iconSize: [24, 41],
+  iconAnchor: [12, 24],
+  popupAnchor: [0, -24],
+});
+
 // set default icon globally
 L.Marker.prototype.options.icon = DefaultIcon;
 
@@ -44,6 +53,7 @@ interface MapViewProps {
   style?: React.CSSProperties;
   renderPopup?: (item: Property) => React.ReactNode;
   onClick?: (lat: number, lng: number) => void;
+  pinPosition?: [number, number] | null;
 }
 
 function MapClickHandler({
@@ -67,6 +77,7 @@ const MapView = ({
   style = { height: "600px", width: "100%" },
   renderPopup,
   onClick,
+  pinPosition,
 }: MapViewProps) => {
   const defaultRenderPopup = (property: Property) => (
     <div className="w-[200px]">
@@ -105,6 +116,12 @@ const MapView = ({
           </Marker>
         ))}
       </MarkerClusterGroup>
+
+      {pinPosition && (
+        <Marker position={pinPosition} icon={PinIcon}>
+          <Popup className="text-xs">Selected Location</Popup>
+        </Marker>
+      )}
 
       <MapClickHandler onClick={onClick} />
     </MapContainer>

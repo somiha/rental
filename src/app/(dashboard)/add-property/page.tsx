@@ -13,104 +13,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import Image from "next/image";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MapPin, X, Search } from "lucide-react";
-
-const mapPinCursor = `url("data:image/svg+xml;utf8,
-<svg xmlns='http://www.w3.org/2000/svg' fill='red' viewBox='0 0 24 24' width='24' height='24'>
-  <path d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z'/>
-</svg>
-") 12 24, auto`;
-
-// Lazy load map
-const MapView = dynamic(() => import("@/components/Mapview"), {
+import { X, Search } from "lucide-react";
+import Fuse from "fuse.js";
+import { bdLocations, Division, District, Upazilla } from "@/lib/locations";
+import { PropertyType, SizeUnit, PropertyFormData } from "@/types/property";
+const Mapview = dynamic(() => import("@/components/Mapview"), {
   ssr: false,
   loading: () => (
     <div className="h-full w-full bg-gray-100 animate-pulse"></div>
   ),
 });
 
-// ---------- Types ----------
-type Division = "Dhaka" | "Chittagong" | "Sylhet" | "Rajshahi";
-type District =
-  | "Dhaka"
-  | "Gazipur"
-  | "Narayanganj"
-  | "Chittagong"
-  | "Cox's Bazar"
-  | "Bandarban"
-  | "Sylhet"
-  | "Moulvibazar"
-  | "Habiganj"
-  | "Rajshahi"
-  | "Bogra"
-  | "Pabna";
-type Upazilla =
-  | "Dhanmondi"
-  | "Gulshan"
-  | "Mirpur"
-  | "Gazipur Sadar"
-  | "Kaliakair"
-  | "Cox's Bazar Sadar"
-  | "Teknaf";
-
-const divisions: Division[] = ["Dhaka", "Chittagong", "Sylhet", "Rajshahi"];
-const districts: Record<Division, District[]> = {
-  Dhaka: ["Dhaka", "Gazipur", "Narayanganj"],
-  Chittagong: ["Chittagong", "Cox's Bazar", "Bandarban"],
-  Sylhet: ["Sylhet", "Moulvibazar", "Habiganj"],
-  Rajshahi: ["Rajshahi", "Bogra", "Pabna"],
-};
-const upazillas: Record<District, Upazilla[]> = {
-  Dhaka: ["Dhanmondi", "Gulshan", "Mirpur"],
-  Gazipur: ["Gazipur Sadar", "Kaliakair"],
-  "Cox's Bazar": ["Cox's Bazar Sadar", "Teknaf"],
-  Narayanganj: [],
-  Chittagong: [],
-  Bandarban: [],
-  Sylhet: [],
-  Moulvibazar: [],
-  Habiganj: [],
-  Rajshahi: [],
-  Bogra: [],
-  Pabna: [],
+// Fuzzy matcher
+const createFuzzyMatcher = (list: string[]) => {
+  const fuse = new Fuse(list, { threshold: 0.3 });
+  return (query: string) => {
+    if (!query) return null;
+    const result = fuse.search(query);
+    return result[0]?.item || null;
+  };
 };
 
-const propertyTypes = [
-  "House",
-  "Flat",
-  "Building",
-  "Restaurant",
-  "Commercial",
-] as const;
-type PropertyType = (typeof propertyTypes)[number];
-
-const sizeUnits = ["sqft", "sqm", "katha", "bigha"] as const;
-type SizeUnit = (typeof sizeUnits)[number];
-
-interface PropertyFormData {
-  title: string;
-  type: PropertyType;
-  division?: Division;
-  district?: District;
-  upazilla?: Upazilla;
-  houseNo: string;
-  roadNo: string;
-  address?: string;
-  latitude: number;
-  longitude: number;
-  size: number;
-  sizeUnit: SizeUnit;
-  description: string;
-  parking: boolean;
-  gasService: boolean;
-  balcony: boolean;
-  dining: boolean;
-  drawing: boolean;
-  images: File[];
-}
-
-// Notification component
+// Notification Component
 const Notification = ({
   message,
   type,
@@ -134,17 +60,6 @@ const Notification = ({
   );
 };
 
-// Custom pin icon component
-const PinIcon = () => (
-  <div className="relative">
-    <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-      <div className="w-4 h-4 bg-white rounded-full"></div>
-    </div>
-    <div className="w-2 h-4 bg-red-500 absolute bottom-[-4px] left-1/2 transform -translate-x-1/2"></div>
-  </div>
-);
-
-// ---------- Page Component ----------
 export default function AddPropertyPage() {
   const {
     register,
@@ -174,10 +89,46 @@ export default function AddPropertyPage() {
   ]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isGeocoding, setIsGeocoding] = useState(false);
+  const [pinPosition, setPinPosition] = useState<[number, number] | null>(null);
   const [notification, setNotification] = useState<{
     message: string;
     type: "success" | "error";
   } | null>(null);
+
+  const currentDivision = watch("division");
+  const currentDistrict = watch("district");
+
+  // Auto-detect user location on mount
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setValue("latitude", latitude);
+          setValue("longitude", longitude);
+          setMapPosition([latitude, longitude]);
+        },
+        (err) => {
+          console.warn(
+            "Geolocation denied or failed, using default Dhaka",
+            err
+          );
+        },
+        { timeout: 10000 }
+      );
+    }
+  }, [setValue]);
+
+  // Cleanup object URLs
+  useEffect(() => {
+    return () => {
+      imagePreviews.forEach((url) => {
+        if (url.startsWith("blob:")) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    };
+  }, [imagePreviews]);
 
   const showNotification = (message: string, type: "success" | "error") => {
     setNotification({ message, type });
@@ -192,77 +143,159 @@ export default function AddPropertyPage() {
     );
   };
 
-  const normalize = (str: string) =>
-    str.toLowerCase().replace(" division", "").replace(" district", "").trim();
-
   const handleMapClick = async (lat: number, lng: number) => {
     try {
       setIsGeocoding(true);
       setValue("latitude", lat);
       setValue("longitude", lng);
       setMapPosition([lat, lng]);
+      setPinPosition([lat, lng]);
 
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=en`
       );
       const data = await response.json();
 
-      if (data.address) {
-        const address = data.display_name || "";
-        setValue("address", address);
+      if (!data.address) {
+        showNotification("Could not determine address.", "error");
+        return;
+      }
 
-        // -------- Find Division --------
-        const divisionName =
-          data.address.state || data.address.region || data.address.city;
-        if (divisionName) {
-          const foundDivision = divisions.find(
-            (div) => normalize(div) === normalize(divisionName)
+      const addr = data.address;
+      setValue("address", data.display_name);
+
+      // Normalize helper
+      const norm = (str: string) =>
+        str
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "")
+          .trim();
+
+      // Extract candidates
+      const candidates = {
+        state: addr.state || addr.province || "",
+        city: addr.city || addr.town || addr.village || "",
+        district: addr.district || addr.city_district || addr.county || "",
+        suburb:
+          addr.suburb ||
+          addr.neighbourhood ||
+          addr.hamlet ||
+          addr.residential ||
+          "",
+      };
+
+      let matchedDivision: Division | null = null;
+      let matchedDistrict: District | null = null;
+      let matchedUpazila: Upazilla | null = null;
+
+      // === 1. Match Division ===
+      for (const div of bdLocations.divisions) {
+        if (
+          norm(div.name) === norm(candidates.state) ||
+          norm(div.name) === norm(candidates.city) ||
+          norm(div.name_bn || "") === norm(candidates.state) ||
+          norm(div.name_bn || "") === norm(candidates.city)
+        ) {
+          matchedDivision = div;
+          setValue("division", div.name);
+          break;
+        }
+      }
+
+      // Fallback: fuzzy match division
+      if (!matchedDivision && candidates.state) {
+        const fuzzyName = createFuzzyMatcher(
+          bdLocations.divisions.map((d) => d.name)
+        )(candidates.state);
+        matchedDivision =
+          bdLocations.divisions.find((d) => d.name === fuzzyName) || null;
+        if (matchedDivision) setValue("division", matchedDivision.name);
+      }
+
+      // If no division, reset and exit
+      if (!matchedDivision) {
+        resetField("division");
+        resetField("district");
+        resetField("upazilla");
+        return;
+      }
+
+      // === 2. Match District ===
+      // Try direct match
+      for (const dist of matchedDivision.districts) {
+        if (
+          norm(dist.name) === norm(candidates.district) ||
+          norm(dist.name) === norm(candidates.city) ||
+          norm(dist.name_bn || "") === norm(candidates.district)
+        ) {
+          matchedDistrict = dist;
+          setValue("district", dist.name);
+          break;
+        }
+      }
+
+      // If no match, try matching district from **suburb name** (e.g. Dumni → Gazipur)
+      if (!matchedDistrict && candidates.suburb) {
+        for (const dist of matchedDivision.districts) {
+          // Check if any upazila in this district matches the suburb
+          const hasMatchingUpazila = dist.upazilas.some(
+            (upa) =>
+              norm(upa.name) === norm(candidates.suburb) ||
+              norm(upa.name_bn || "") === norm(candidates.suburb)
           );
-          if (foundDivision) {
-            setValue("division", foundDivision);
+          if (hasMatchingUpazila) {
+            matchedDistrict = dist;
+            setValue("district", dist.name);
+            break;
+          }
+        }
+      }
 
-            // -------- Find District --------
-            const districtName =
-              data.address.county || data.address.city || data.address.town;
-            if (districtName) {
-              const foundDistrict = districts[foundDivision].find(
-                (dist) => normalize(dist) === normalize(districtName)
-              );
-              if (foundDistrict) {
-                setValue("district", foundDistrict);
+      // Fuzzy fallback for district
+      if (!matchedDistrict && candidates.district) {
+        const fuzzyDist = createFuzzyMatcher(
+          matchedDivision.districts.map((d) => d.name)
+        )(candidates.district);
+        matchedDistrict =
+          matchedDivision.districts.find((d) => d.name === fuzzyDist) || null;
+        if (matchedDistrict) setValue("district", matchedDistrict.name);
+      }
 
-                // -------- Find Upazilla / Area --------
-                const upaName =
-                  data.address.suburb ||
-                  data.address.village ||
-                  data.address.town;
-                if (upaName) {
-                  const foundUpa = upazillas[foundDistrict].find(
-                    (upa) => normalize(upa) === normalize(upaName)
-                  );
-                  if (foundUpa) {
-                    setValue("upazilla", foundUpa);
-                  }
-                }
-              }
-            }
+      // === 3. Match Upazila ===
+      if (matchedDistrict && candidates.suburb) {
+        for (const upa of matchedDistrict.upazilas) {
+          if (
+            norm(upa.name) === norm(candidates.suburb) ||
+            norm(upa.name_bn || "") === norm(candidates.suburb)
+          ) {
+            matchedUpazila = upa;
+            setValue("upazilla", upa.name);
+            break;
           }
         }
 
-        // House / Road
-        if (data.address.house_number) {
-          setValue("houseNo", data.address.house_number);
-        }
-        if (data.address.road) {
-          setValue("roadNo", data.address.road);
+        // Fuzzy fallback
+        if (!matchedUpazila) {
+          const fuzzyUpa = createFuzzyMatcher(
+            matchedDistrict.upazilas.map((u) => u.name)
+          )(candidates.suburb);
+          const found = matchedDistrict.upazilas.find(
+            (u) => u.name === fuzzyUpa
+          );
+          if (found) setValue("upazilla", found.name);
         }
       }
+
+      // === 4. House & Road ===
+      if (addr.house_number) setValue("houseNo", addr.house_number);
+      if (addr.road) setValue("roadNo", addr.road);
+
+      // Clear unmatched
+      if (!matchedDistrict) resetField("district");
+      if (!matchedUpazila) resetField("upazilla");
     } catch (error) {
       console.error("Geocoding error:", error);
-      showNotification(
-        "Could not fetch address details for this location.",
-        "error"
-      );
+      showNotification("Failed to fetch address details.", "error");
     } finally {
       setIsGeocoding(false);
     }
@@ -272,19 +305,18 @@ export default function AddPropertyPage() {
     if (!e.target.files) return;
 
     const files = Array.from(e.target.files);
-
     if (files.length > 10) {
-      showNotification("You can upload a maximum of 10 images.", "error");
+      showNotification("Max 10 images allowed.", "error");
       return;
     }
 
     const validFiles = files.filter((file) => {
       if (!file.type.startsWith("image/")) {
-        showNotification(`${file.name} is not an image file.`, "error");
+        showNotification(`${file.name} is not an image.`, "error");
         return false;
       }
       if (file.size > 5 * 1024 * 1024) {
-        showNotification(`${file.name} exceeds 5MB limit.`, "error");
+        showNotification(`${file.name} > 5MB.`, "error");
         return false;
       }
       return true;
@@ -293,9 +325,9 @@ export default function AddPropertyPage() {
     const previews = validFiles.map((file) => URL.createObjectURL(file));
     setImagePreviews(previews);
 
-    const newFileList = new DataTransfer();
-    validFiles.forEach((file) => newFileList.items.add(file));
-    setValue("images", Array.from(newFileList.files), { shouldValidate: true });
+    const dt = new DataTransfer();
+    validFiles.forEach((file) => dt.items.add(file));
+    setValue("images", Array.from(dt.files), { shouldValidate: true });
   };
 
   const removeImage = (index: number) => {
@@ -303,36 +335,27 @@ export default function AddPropertyPage() {
     newPreviews.splice(index, 1);
     setImagePreviews(newPreviews);
 
-    if (fileInputRef.current?.files) {
-      const files = Array.from(fileInputRef.current.files);
-      files.splice(index, 1);
-      const newFileList = new DataTransfer();
-      files.forEach((file) => newFileList.items.add(file));
-      fileInputRef.current.files = newFileList.files;
-      setValue("images", Array.from(newFileList.files), {
-        shouldValidate: true,
-      });
+    if (fileInputRef.current) {
+      const dt = new DataTransfer();
+      const files = fileInputRef.current.files;
+      if (files) {
+        Array.from(files).forEach((file, i) => {
+          if (i !== index) dt.items.add(file);
+        });
+        fileInputRef.current.files = dt.files;
+        setValue("images", Array.from(dt.files), { shouldValidate: true });
+      }
     }
   };
 
-  // useEffect(() => {
-  //   return () => {
-  //     imagePreviews.forEach((url) => URL.revokeObjectURL(url));
-  //   };
-  // }, [imagePreviews]);
-
-  useEffect(() => {
-    return () => {
-      imagePreviews.forEach((url) => {
-        if (url.startsWith("blob:")) {
-          URL.revokeObjectURL(url);
-        }
-      });
-    };
-  }, [imagePreviews]);
-
-  const currentDivision = watch("division");
-  const currentDistrict = watch("district");
+  const propertyTypes: PropertyType[] = [
+    "House",
+    "Flat",
+    "Building",
+    "Restaurant",
+    "Commercial",
+  ];
+  const sizeUnits: SizeUnit[] = ["sqft", "sqm", "katha", "bigha"];
 
   return (
     <div className="h-screen flex flex-col md:flex-row overflow-hidden">
@@ -345,33 +368,21 @@ export default function AddPropertyPage() {
         />
       )}
 
-      {/* Mobile: Map on top */}
-      <div className="relative h-1/2 md:h-full md:w-1/2 bg-gray-50 order-1 md:order-none">
-        <MapView
+      {/* Map */}
+      <div className="relative h-1/2 md:h-full md:w-1/2 bg-white order-1 md:order-none p-8">
+        <Mapview
           data={[]}
           center={mapPosition}
           zoom={13}
-          style={{ height: "100%", width: "100%" }}
+          style={{ height: "100%", width: "100%", borderRadius: "0.5rem" }}
           onClick={handleMapClick}
+          pinPosition={pinPosition}
         />
 
-        {/* Location Pin */}
-        <div
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10"
-          style={{
-            transform: "translate(-50%, -50%)",
-            zIndex: 10,
-            pointerEvents: "none",
-          }}
-        >
-          <PinIcon />
-        </div>
-
-        {/* Address Info Overlay */}
-        <div className="absolute bottom-6 left-6 right-6 bg-white p-3 rounded-lg shadow-md border border-gray-200">
+        <div className="absolute bottom-4 left-8 right-8 bg-white p-3 rounded-lg shadow-md border border-gray-200">
           <p className="text-sm font-medium">Selected Location:</p>
           <p className="text-sm text-gray-600 truncate">
-            {watch("address") || "Click on the map to select a location"}
+            {watch("address") || "Click on the map"}
           </p>
           {isGeocoding && (
             <p className="text-xs text-gray-500 mt-1">Fetching address...</p>
@@ -379,7 +390,7 @@ export default function AddPropertyPage() {
         </div>
       </div>
 
-      {/* Form - Mobile: bottom, Desktop: right side */}
+      {/* Form */}
       <div className="overflow-y-auto p-6 bg-white border-t md:border-l border-gray-200 h-1/2 md:h-full md:w-1/2 order-2 md:order-none">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-xl font-semibold">Add New Property</h1>
@@ -389,38 +400,19 @@ export default function AddPropertyPage() {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Property Title */}
+          {/* Type */}
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Property Title <span className="text-red-500">*</span>
-            </label>
-            <Input
-              placeholder="The Grand Haven Residences & Suites"
-              {...register("title", { required: "Title is required" })}
-              className={`border-gray-300 focus:border-primary-500 ${
-                errors.title ? "border-red-500" : ""
-              }`}
-            />
-            {errors.title && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.title.message}
-              </p>
-            )}
-          </div>
-
-          {/* Property Type */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium mb-1 ">
               Property Type <span className="text-red-500">*</span>
             </label>
             <Select
               onValueChange={(value: PropertyType) => setValue("type", value)}
               defaultValue="House"
             >
-              <SelectTrigger className="border-gray-300 focus:border-primary-500">
-                <SelectValue placeholder="Select property type" />
+              <SelectTrigger className="border border-gray-300 focus:border-primary-500">
+                <SelectValue placeholder="Select type" />
               </SelectTrigger>
-              <SelectContent className="bg-white border border-gray-200">
+              <SelectContent className="bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
                 {propertyTypes.map((type) => (
                   <SelectItem key={type} value={type}>
                     {type}
@@ -429,12 +421,28 @@ export default function AddPropertyPage() {
               </SelectContent>
             </Select>
           </div>
+          {/* Title */}
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Property Title <span className="text-red-500">*</span>
+            </label>
+            <Input
+              placeholder="The Grand Haven Residences & Suites"
+              {...register("title", { required: "Required" })}
+              className={errors.title ? "border-red-500" : "border-gray-300"}
+            />
+            {errors.title && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.title.message}
+              </p>
+            )}
+          </div>
 
           {/* Location */}
           <div>
             <label className="block text-sm font-medium mb-1">Location</label>
             <div className="relative mb-2">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <Input
                 placeholder="Search location..."
                 value={watch("address") || ""}
@@ -446,20 +454,20 @@ export default function AddPropertyPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div>
                 <Select
-                  onValueChange={(value: Division) => {
+                  onValueChange={(value) => {
                     setValue("division", value);
                     setValue("district", undefined);
                     setValue("upazilla", undefined);
                   }}
-                  defaultValue=""
+                  value={currentDivision}
                 >
-                  <SelectTrigger className="border-gray-300 focus:border-primary-500">
+                  <SelectTrigger className="border border-gray-300 focus:border-primary-500">
                     <SelectValue placeholder="Division" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200">
-                    {divisions.map((div) => (
-                      <SelectItem key={div} value={div}>
-                        {div}
+                  <SelectContent className="bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                    {bdLocations.divisions.map((div: Division) => (
+                      <SelectItem key={div.name} value={div.name}>
+                        {div.name} ({div.name_bn})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -468,21 +476,22 @@ export default function AddPropertyPage() {
 
               <div>
                 <Select
-                  onValueChange={(value: District) => {
+                  onValueChange={(value) => {
                     setValue("district", value);
                     setValue("upazilla", undefined);
                   }}
+                  value={currentDistrict}
                   disabled={!currentDivision}
-                  defaultValue=""
                 >
-                  <SelectTrigger className="border-gray-300 focus:border-primary-500">
+                  <SelectTrigger className="border border-gray-300 focus:border-primary-500">
                     <SelectValue placeholder="District" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200">
-                    {currentDivision &&
-                      districts[currentDivision].map((dist) => (
-                        <SelectItem key={dist} value={dist}>
-                          {dist}
+                  <SelectContent className="bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                    {bdLocations.divisions
+                      .find((div: Division) => div.name === currentDivision)
+                      ?.districts.map((dist: District) => (
+                        <SelectItem key={dist.name} value={dist.name}>
+                          {dist.name} ({dist.name_bn})
                         </SelectItem>
                       ))}
                   </SelectContent>
@@ -491,20 +500,21 @@ export default function AddPropertyPage() {
 
               <div>
                 <Select
-                  onValueChange={(value: Upazilla) =>
-                    setValue("upazilla", value)
-                  }
+                  onValueChange={(value) => setValue("upazilla", value)}
                   disabled={!currentDistrict}
-                  defaultValue=""
                 >
-                  <SelectTrigger className="border-gray-300 focus:border-primary-500">
-                    <SelectValue placeholder="Area/Upazilla" />
+                  <SelectTrigger className="border border-gray-300 focus:border-primary-500">
+                    <SelectValue placeholder="Upazila" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200">
-                    {currentDistrict &&
-                      upazillas[currentDistrict].map((upa) => (
-                        <SelectItem key={upa} value={upa}>
-                          {upa}
+                  <SelectContent className="bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                    {bdLocations.divisions
+                      .find((div: Division) => div.name === currentDivision)
+                      ?.districts.find(
+                        (dist: District) => dist.name === currentDistrict
+                      )
+                      ?.upazilas.map((upa: Upazilla) => (
+                        <SelectItem key={upa.name} value={upa.name}>
+                          {upa.name} ({upa.name_bn})
                         </SelectItem>
                       ))}
                   </SelectContent>
@@ -512,6 +522,7 @@ export default function AddPropertyPage() {
               </div>
             </div>
 
+            {/* House & Road */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <Input
                 placeholder="House No."
@@ -525,7 +536,8 @@ export default function AddPropertyPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-4">
+            {/* Lat/Lng */}
+            <div className="grid grid-cols-2 gap-4">
               <Input
                 placeholder="Latitude"
                 type="number"
@@ -549,23 +561,38 @@ export default function AddPropertyPage() {
             </div>
           </div>
 
-          {/* Property Size */}
+          {/* Size & Desc */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium mb-1">
-                Property Size <span className="text-red-500">*</span>
+                Description <span className="text-red-500">*</span>
+              </label>
+              <Textarea
+                placeholder="Add Description"
+                {...register("description", { required: "Required" })}
+                className={`min-h-[100px] ${
+                  errors.description ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.description && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.description.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Size <span className="text-red-500">*</span>
               </label>
               <div className="flex gap-2">
                 <Input
                   placeholder="Size"
                   type="number"
                   {...register("size", {
-                    required: "Size is required",
+                    required: "Required",
                     valueAsNumber: true,
                   })}
-                  className={`border-gray-300 ${
-                    errors.size ? "border-red-500" : ""
-                  }`}
+                  className={errors.size ? "border-red-500" : "border-gray-300"}
                 />
                 <Select
                   onValueChange={(value: SizeUnit) =>
@@ -573,10 +600,10 @@ export default function AddPropertyPage() {
                   }
                   defaultValue="sqft"
                 >
-                  <SelectTrigger className="w-[100px] border-gray-300">
+                  <SelectTrigger className="w-[100px] border border-gray-300 focus:border-primary-500">
                     <SelectValue placeholder="Unit" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200">
+                  <SelectContent className="bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
                     {sizeUnits.map((unit) => (
                       <SelectItem key={unit} value={unit}>
                         {unit}
@@ -591,70 +618,50 @@ export default function AddPropertyPage() {
                 </p>
               )}
             </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Description <span className="text-red-500">*</span>
-              </label>
-              <Textarea
-                placeholder="Add Description"
-                {...register("description", {
-                  required: "Description is required",
-                })}
-                className={`border-gray-300 min-h-[100px] ${
-                  errors.description ? "border-red-500" : ""
-                }`}
-              />
-              {errors.description && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.description.message}
-                </p>
-              )}
-            </div>
           </div>
 
           {/* Amenities */}
           <div>
             <label className="block text-sm font-medium mb-2">Amenities</label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <label className="flex items-center space-x-2">
-                <Checkbox id="parking" {...register("parking")} />
-                <span className="text-sm">Parking</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <Checkbox id="gas" {...register("gasService")} />
-                <span className="text-sm">Gas Service</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <Checkbox id="balcony" {...register("balcony")} />
-                <span className="text-sm">Balcony</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <Checkbox id="dining" {...register("dining")} />
-                <span className="text-sm">Dining</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <Checkbox id="drawing" {...register("drawing")} />
-                <span className="text-sm">Drawing</span>
-              </label>
+              {(
+                [
+                  "parking",
+                  "gasService",
+                  "balcony",
+                  "dining",
+                  "drawing",
+                ] as const
+              ).map((amenity) => (
+                <label key={amenity} className="flex items-center space-x-2">
+                  <Checkbox {...register(amenity)} />
+                  <span className="text-sm">
+                    {amenity
+                      .replace(/([A-Z])/g, " $1")
+                      .replace(/^./, (s) => s.toUpperCase())}
+                  </span>
+                </label>
+              ))}
             </div>
           </div>
 
-          {/* Property Image */}
+          {/* Images */}
           <div>
-            <p className="block text-sm font-medium mb-2">Property Images</p>
+            <p className="block text-sm font-medium mb-2">Images</p>
             <div className="grid grid-cols-3 gap-3 mb-4">
               {imagePreviews.map((preview, index) => (
                 <div key={index} className="relative group">
-                  <img
+                  <Image
                     src={preview}
                     alt={`Preview ${index + 1}`}
+                    width={100}
+                    height={96}
                     className="w-full h-24 object-cover rounded border border-gray-200"
                   />
                   <button
                     type="button"
                     onClick={() => removeImage(index)}
-                    className="absolute top-1 right-1 bg-black bg-opacity-50 text-white rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1 right-1 bg-black bg-opacity-50 text-white rounded p-1 opacity-0 group-hover:opacity-100 transition"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -666,9 +673,7 @@ export default function AddPropertyPage() {
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <div className="text-center">
-                    <div className="w-6 h-6 text-gray-400 mx-auto mb-1 flex items-center justify-center">
-                      <span className="text-xl">+</span>
-                    </div>
+                    <div className="w-6 h-6 text-gray-400 mx-auto mb-1">+</div>
                     <p className="text-xs text-gray-500">Add Image</p>
                   </div>
                 </div>
@@ -687,14 +692,11 @@ export default function AddPropertyPage() {
 
           {/* Buttons */}
           <div className="flex justify-end gap-4 pt-4 border-t border-gray-200">
-            <Button type="button" variant="outline" className="border-gray-300">
+            <Button type="button" variant="outline">
               Cancel
             </Button>
-            <Button
-              type="submit"
-              className="bg-primary-600 hover:bg-primary-700 text-white"
-            >
-              Submit Property
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+              Submit
             </Button>
           </div>
         </form>
